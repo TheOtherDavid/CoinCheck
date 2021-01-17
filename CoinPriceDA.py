@@ -10,8 +10,9 @@ class CoinPriceDA:
         public_client = cbpro.PublicClient()
         currency_code = currency + "-USD"
 
-        price = public_client.get_product_ticker(currency_code)
+        ticker_info = public_client.get_product_ticker(currency_code)
+        price = ticker_info['price']
 
         #Should we persist the prices here, and return?
 
-        #Return prices.
+        return price

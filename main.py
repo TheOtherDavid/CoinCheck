@@ -16,7 +16,7 @@ def handler(event, context):
     print_hi('PyCharm')
     # Get price from Coinbase
     coinPriceDA = CoinPriceDA()
-    # prices = coinPriceDA.get_price("BTC")
+    price = coinPriceDA.get_price("BTC")
 
     # Do logic on that price
     # Store the price, retrieve the previous prices, and do math on it?
@@ -30,9 +30,9 @@ def handler(event, context):
     # Send SMS message
     if True:
         messageDA = MessageDA()
-        messageDA.send_message("This is a test")
+        messageDA.send_message("BTC is currently at " + price)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
