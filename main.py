@@ -1,11 +1,18 @@
+from datetime import datetime
 from MessageDA import MessageDA
 from CoinPriceDA import CoinPriceDA
+from PriceStorageDA import PriceStorageDA
 
 
 def handler(event, context):
+    product_code = "BTC-USD"
     # Get price from Coinbase
     coinPriceDA = CoinPriceDA()
-    price = coinPriceDA.get_price("BTC")
+    price = coinPriceDA.get_price(product_code)
+
+    priceStorageDA = PriceStorageDA()
+    time = datetime.now(None)
+    priceStorageDA.savePrice(time, product_code, price)
 
     # Do logic on that price
     # Store the price, retrieve the previous prices, and do math on it?
@@ -19,7 +26,7 @@ def handler(event, context):
     # Send SMS message
     if True:
         messageDA = MessageDA()
-        messageDA.send_message("BTC is currently at " + price)
+        messageDA.send_message(product_code + " is currently at " + price)
 
 
 if __name__ == '__main__':
