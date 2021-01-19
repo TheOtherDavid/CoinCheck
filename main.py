@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from MessageDA import MessageDA
 from CoinPriceDA import CoinPriceDA
@@ -10,9 +11,13 @@ def handler(event, context):
     coinPriceDA = CoinPriceDA()
     price = coinPriceDA.get_price(product_code)
 
+    # Store price in DB
     priceStorageDA = PriceStorageDA()
     time = datetime.now(None)
     priceStorageDA.savePrice(time, product_code, price)
+
+    # Get all prices (maybe last six hours?)
+    rows = priceStorageDA.getPrices(product_code)
 
     # Do logic on that price
     # Store the price, retrieve the previous prices, and do math on it?
@@ -26,7 +31,10 @@ def handler(event, context):
     # Send SMS message
     if True:
         messageDA = MessageDA()
-        messageDA.send_message(product_code + " is currently at " + price)
+        env = os.getenv("env")
+        message = "Greetings from " + env + ". " + \
+                  product_code + " is currently at " + price
+        messageDA.send_message(message)
 
 
 if __name__ == '__main__':
