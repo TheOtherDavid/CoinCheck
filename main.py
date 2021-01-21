@@ -33,7 +33,7 @@ def handler(event, context):
         messageDA = MessageDA()
         env = os.getenv("env")
         message = "Greetings from " + env + ". " + \
-                  product_code + " is currently at " + price
+                  product_code + " is currently at " + str(price)
         messageDA.send_message(message)
 
 
