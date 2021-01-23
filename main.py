@@ -1,4 +1,6 @@
 import os
+import pytz
+
 from datetime import datetime
 from MessageDA import MessageDA
 from CoinPriceDA import CoinPriceDA
@@ -13,7 +15,8 @@ def handler(event, context):
 
     # Store price in DB
     priceStorageDA = PriceStorageDA()
-    time = datetime.now(None)
+    eastern = pytz.timezone('US/Eastern')
+    time = datetime.now(eastern)
     priceStorageDA.savePrice(time, product_code, price)
 
     # Get all prices (maybe last six hours?)
