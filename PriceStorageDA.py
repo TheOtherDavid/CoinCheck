@@ -24,7 +24,8 @@ class PriceStorageDA:
         dynamodb = self.getDB()
         table = dynamodb.Table("PRC")
         response = table.query(
-            KeyConditionExpression=Key('PD_ID').eq(product_code) & Key('DTM').between(str(six_hours_ago), str(now))
+            KeyConditionExpression=Key('PD_ID').eq(product_code) & Key('DTM').between(str(six_hours_ago), str(now)),
+            ScanIndexForward=False
         )
         return response
 

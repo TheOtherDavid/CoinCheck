@@ -17,7 +17,15 @@ def handler(event, context):
     priceStorageDA.savePrice(time, product_code, price)
 
     # Get all prices (maybe last six hours?)
-    rows = priceStorageDA.getPrices(product_code)
+    rows = priceStorageDA.getPrices(product_code)["Items"]
+    current_price_record = rows[0]
+    current_price = float(current_price_record["PRC"])
+    last_price_record = rows[1]
+    last_price = float(last_price_record["PRC"])
+    last_price_date = datetime.strptime(last_price_record["DTM"], "%Y-%m-%d %H:%M:%S.%f")
+    last_price_date_string = datetime.strftime(last_price_date, "%H:%M:%S")
+    percentage_difference = (current_price - last_price) / abs(last_price) * 100
+    percentage_difference = round(percentage_difference, 2)
 
     # Do logic on that price
     # Store the price, retrieve the previous prices, and do math on it?
@@ -32,8 +40,12 @@ def handler(event, context):
     if True:
         messageDA = MessageDA()
         env = os.getenv("env")
-        message = "Greetings from " + str(env) + ". " + \
-                  str(product_code) + " is currently at " + str(price)
+        # Adding newline to beginning of the message to avoid sending blank text because of colon character.
+        message = "\nGreetings from " + str(env) + ". " + \
+                  str(product_code) + " is currently at " + str(price) + \
+                  ". This is a change of " + str(percentage_difference) + "% since " + \
+                  last_price_date_string + "."
+
         messageDA.send_message(message)
 
 
