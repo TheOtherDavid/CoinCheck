@@ -1,6 +1,5 @@
 import os
 import smtplib
-import configparser
 
 
 class MessageDA:
