@@ -25,7 +25,7 @@ def handler(event, context):
     current_price = float(current_price_record["PRC"])
     last_price_record = rows[1]
     last_price = float(last_price_record["PRC"])
-    last_price_date = datetime.strptime(last_price_record["DTM"], "%Y-%m-%d %H:%M:%S.%f")
+    last_price_date = datetime.strptime(last_price_record["DTM"], "%Y-%m-%d %H:%M:%S.%f%z")
     last_price_date_string = datetime.strftime(last_price_date, "%H:%M:%S")
     percentage_difference = (current_price - last_price) / abs(last_price) * 100
     percentage_difference = round(percentage_difference, 2)
