@@ -19,12 +19,13 @@ class PriceStorageDA:
 
     def getPrices(self, product_code):
         now = datetime.now(None)
-        six_hours_ago = datetime.now(None) - timedelta(hours=6)
+        alert_target_time = float(os.environ.get("alert_target_time"))
+        target_time = datetime.now(None) - timedelta(hours=alert_target_time)
 
         dynamodb = self.getDB()
         table = dynamodb.Table("PRC")
         response = table.query(
-            KeyConditionExpression=Key('PD_ID').eq(product_code) & Key('DTM').between(str(six_hours_ago), str(now)),
+            KeyConditionExpression=Key('PD_ID').eq(product_code) & Key('DTM').between(str(target_time), str(now)),
             ScanIndexForward=False
         )
         return response
