@@ -19,35 +19,40 @@ def handler(event, context):
     time = datetime.now(eastern)
     priceStorageDA.savePrice(time, product_code, price)
 
-    # Get all prices (maybe last six hours?)
-    rows = priceStorageDA.getPrices(product_code)["Items"]
-    current_price_record = rows[0]
+    # Get last six hours prices
+    price_records = priceStorageDA.getPrices(product_code)["Items"]
+    current_price_record = price_records[0]
     current_price = float(current_price_record["PRC"])
-    last_price_record = rows[1]
-    last_price = float(last_price_record["PRC"])
-    last_price_date = datetime.strptime(last_price_record["DTM"], "%Y-%m-%d %H:%M:%S.%f%z")
-    last_price_date_string = datetime.strftime(last_price_date, "%H:%M:%S")
-    percentage_difference = (current_price - last_price) / abs(last_price) * 100
-    percentage_difference = round(percentage_difference, 2)
 
-    # Do logic on that price
-    # Store the price, retrieve the previous prices, and do math on it?
-    # I guess I need a DB.
 
-    # Compare the current price to, in order:
-    # The price from 1 hour, 2 hour, 3 hours, 4 hours, 5 hours, and 6 hours ago.
-    # The FIRST TIME that the price has a >10% difference, break that loop
-    # Report that the prices have risen/dropped the amount in the time amount.
+    price_date_string = None
+    percentage_difference = None
+    send_message = False
+
+    alert_target_difference = float(os.environ.get("alert_target_difference"))
+
+    # Compare the current price to the previous prices
+    for price_record in price_records:
+        # Technically this compares current_price to itself the first time around the loop, but it shouldn't matter.
+        price = float(price_record["PRC"])
+        price_date = datetime.strptime(price_record["DTM"], "%Y-%m-%d %H:%M:%S.%f%z")
+        price_date_string = datetime.strftime(price_date, "%H:%M:%S")
+        percentage_difference = (current_price - price) / abs(price) * 100
+        percentage_difference = round(percentage_difference, 2)
+        if abs(percentage_difference > alert_target_difference):
+            # The FIRST TIME that the price has a >X% difference, break that loop
+            send_message = True
+            break
 
     # Send SMS message
-    if True:
+    if send_message:
         messageDA = MessageDA()
         env = os.getenv("env")
         # Adding newline to beginning of the message to avoid sending blank text because of colon character.
         message = "\nGreetings from " + str(env) + ". " + \
                   str(product_code) + " is currently at " + str(price) + \
                   ". This is a change of " + str(percentage_difference) + "% since " + \
-                  last_price_date_string + "."
+                  price_date_string + "."
 
         messageDA.send_message(message)
 
