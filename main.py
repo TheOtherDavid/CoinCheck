@@ -19,7 +19,7 @@ def handler(event, context):
         priceStorageDA = PriceStorageDA()
         eastern = pytz.timezone('US/Eastern')
         time = datetime.now(eastern)
-        #priceStorageDA.savePrice(time, product_code, price)
+        priceStorageDA.savePrice(time, product_code, price)
 
         # Get last six hours prices
         price_records = priceStorageDA.getPrices(product_code)["Items"]
