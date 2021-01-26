@@ -21,7 +21,6 @@ class MessageDA:
         with smtplib.SMTP_SSL(smtp_url, smtp_port) as server:
             # server.set_debuglevel(1)
             server.login(login, password)
-            print(f'Login successful')
 
             server.sendmail(sender, receiver, msg)
             print(f'Mail successful')
