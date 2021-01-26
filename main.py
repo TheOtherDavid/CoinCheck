@@ -19,7 +19,7 @@ def handler(event, context):
         priceStorageDA = PriceStorageDA()
         eastern = pytz.timezone('US/Eastern')
         time = datetime.now(eastern)
-        priceStorageDA.savePrice(time, product_code, price)
+        #priceStorageDA.savePrice(time, product_code, price)
 
         # Get last six hours prices
         price_records = priceStorageDA.getPrices(product_code)["Items"]
@@ -42,10 +42,10 @@ def handler(event, context):
             percentage_difference = (current_price - price) / abs(price) * 100
             percentage_difference = round(percentage_difference, 2)
             if abs(percentage_difference > alert_target_difference):
-                print(f"Largest percent difference for " + product_code + ": " + str(percentage_difference))
                 # The FIRST TIME that the price has a >X% difference, break that loop
                 send_message = True
                 break
+        print(f"Largest percent difference for " + product_code + ": " + str(percentage_difference))
 
         # Send SMS message
         if send_message:
