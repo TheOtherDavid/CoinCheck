@@ -17,6 +17,21 @@ class PriceStorageDA:
         }
         table.put_item(Item=price_record)
 
+    def saveBalance(self, balance_record):
+        dynamodb = self.getDB()
+
+        table = dynamodb.Table("PRTFL")
+
+        db_balance_record = {
+            "DTM": str(balance_record["time"]),
+            "PD_ID": balance_record["currency"],
+            "QTY": balance_record["balance"],
+            "PRC": balance_record["price"],
+            "USD_VAL": str(float(balance_record["balance"]) * float(balance_record["price"]))
+        }
+
+        table.put_item(Item=db_balance_record)
+
     def getPrices(self, product_code):
         now = datetime.now(None)
         alert_target_time = float(os.environ.get("alert_target_time"))

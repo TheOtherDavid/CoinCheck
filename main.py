@@ -8,6 +8,31 @@ from PriceStorageDA import PriceStorageDA
 
 
 def handler(event, context):
+    record_balances()
+    price_alert()
+
+
+def record_balances():
+    coinPriceDA = CoinPriceDA()
+    balance_records = coinPriceDA.get_account_balances()
+
+    eastern = pytz.timezone('US/Eastern')
+    time = datetime.now(eastern)
+
+    for balance_record in balance_records:
+
+        balance_record["time"] = time
+        product = balance_record["currency"]
+        if product != "USD":
+            product_code = balance_record["currency"] + "-USD"
+            balance_record["price"] = coinPriceDA.get_price(product_code)
+        if product == "USD":
+            balance_record["price"] = 1
+        priceStorageDA = PriceStorageDA()
+        priceStorageDA.saveBalance(balance_record)
+
+
+def price_alert():
     product_codes = ["BTC-USD", "ETH-USD"]
 
     for product_code in product_codes:
@@ -19,7 +44,9 @@ def handler(event, context):
         priceStorageDA = PriceStorageDA()
         eastern = pytz.timezone('US/Eastern')
         time = datetime.now(eastern)
-        priceStorageDA.savePrice(time, product_code, price)
+        env = os.getenv("env")
+        if env == 'AWS':
+            priceStorageDA.savePrice(time, product_code, price)
 
         # Get last six hours prices
         price_records = priceStorageDA.getPrices(product_code)["Items"]
@@ -50,7 +77,6 @@ def handler(event, context):
         # Send SMS message
         if send_message:
             messageDA = MessageDA()
-            env = os.getenv("env")
             print(f"Sending message.")
             # Adding newline to beginning of the message to avoid sending blank text because of colon character.
             message = "\nGreetings from " + str(env) + ". " + \
@@ -59,7 +85,6 @@ def handler(event, context):
                       price_date_string + "."
 
             messageDA.send_message(message)
-
 
 if __name__ == '__main__':
     handler(None, None)
