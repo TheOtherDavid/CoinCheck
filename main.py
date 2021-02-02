@@ -8,8 +8,22 @@ from PriceStorageDA import PriceStorageDA
 
 
 def handler(event, context):
-    record_balances()
-    price_alert()
+    env = os.getenv("env")
+    #TODO: Remove this later? Currently a hack to prevent AWS from erroring because I haven't updated the layer.
+    if env == 'AWS':
+        record_balances()
+        price_alert()
+    else:
+        plot_balances()
+
+def plot_balances():
+    #TODO: Move import up higher once you update the layer with pandas and pyplot
+    from GraphDA import GraphDA
+
+    priceStorageDA = PriceStorageDA()
+    balance_records = priceStorageDA.getBalances()
+    graphDA = GraphDA()
+    graphDA.plot_data(balance_records)
 
 
 def record_balances():
@@ -30,6 +44,7 @@ def record_balances():
             balance_record["price"] = 1
         priceStorageDA = PriceStorageDA()
         priceStorageDA.saveBalance(balance_record)
+    print(f"Balances recorded")
 
 
 def price_alert():
@@ -45,8 +60,7 @@ def price_alert():
         eastern = pytz.timezone('US/Eastern')
         time = datetime.now(eastern)
         env = os.getenv("env")
-        if env == 'AWS':
-            priceStorageDA.savePrice(time, product_code, price)
+        priceStorageDA.savePrice(time, product_code, price)
 
         # Get last six hours prices
         price_records = priceStorageDA.getPrices(product_code)["Items"]

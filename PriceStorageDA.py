@@ -17,6 +17,19 @@ class PriceStorageDA:
         }
         table.put_item(Item=price_record)
 
+    def getPrices(self, product_code):
+        now = datetime.now(None)
+        alert_target_time = float(os.environ.get("alert_target_time"))
+        target_time = datetime.now(None) - timedelta(hours=alert_target_time)
+
+        dynamodb = self.getDB()
+        table = dynamodb.Table("PRC")
+        response = table.query(
+            KeyConditionExpression=Key('PD_ID').eq(product_code) & Key('DTM').between(str(target_time), str(now)),
+            ScanIndexForward=False
+        )
+        return response
+
     def saveBalance(self, balance_record):
         dynamodb = self.getDB()
 
@@ -32,17 +45,22 @@ class PriceStorageDA:
 
         table.put_item(Item=db_balance_record)
 
-    def getPrices(self, product_code):
-        now = datetime.now(None)
-        alert_target_time = float(os.environ.get("alert_target_time"))
-        target_time = datetime.now(None) - timedelta(hours=alert_target_time)
-
+    def getBalances(self):
         dynamodb = self.getDB()
-        table = dynamodb.Table("PRC")
-        response = table.query(
-            KeyConditionExpression=Key('PD_ID').eq(product_code) & Key('DTM').between(str(target_time), str(now)),
-            ScanIndexForward=False
-        )
+        table = dynamodb.Table("PRTFL")
+        dynamo_response = table.scan()["Items"]
+        response = []
+        for orig_dict in dynamo_response:
+            new_dict = {
+                # Leave DTM as a string. May be a bad idea
+                "DTM": orig_dict["DTM"],
+                "PD_ID": orig_dict["PD_ID"],
+                "PRC": float(orig_dict["PRC"]),
+                "QTY": float(orig_dict["QTY"]),
+                "USD_VAL": float(orig_dict["USD_VAL"])
+            }
+            response.append(new_dict)
+
         return response
 
     def getDB(self):
