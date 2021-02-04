@@ -38,9 +38,10 @@ class PriceStorageDA:
         db_balance_record = {
             "DTM": str(balance_record["time"]),
             "PD_ID": balance_record["currency"],
-            "QTY": balance_record["balance"],
-            "PRC": balance_record["price"],
-            "USD_VAL": str(float(balance_record["balance"]) * float(balance_record["price"]))
+            "QTY": str(balance_record["balance"]),
+            "PRC": str(balance_record["price"]),
+            "USD_VAL": str(float(balance_record["balance"]) * float(balance_record["price"])),
+            "AVG_PRC": str(balance_record["average_price"])
         }
 
         table.put_item(Item=db_balance_record)
