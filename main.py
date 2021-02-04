@@ -40,8 +40,27 @@ def record_balances():
         if product != "USD":
             product_code = balance_record["currency"] + "-USD"
             balance_record["price"] = coinPriceDA.get_price(product_code)
+            order_records = coinPriceDA.get_orders(product_code)
+
+            total_quantity = 0
+            total_value = 0
+
+            for order_record in order_records:
+                quantity = order_record["quantity"]
+                price = order_record["price"]
+                value = quantity * price
+                total_quantity = total_quantity + quantity
+                total_value = total_value + value
+
+            if total_quantity != 0:
+                average_price = total_value / total_quantity
+            else:
+                average_price = 0
+            balance_record["average_price"] = average_price
+
         if product == "USD":
             balance_record["price"] = 1
+            balance_record["average_price"] = 1
         priceStorageDA = PriceStorageDA()
         priceStorageDA.saveBalance(balance_record)
     print(f"Balances recorded")
