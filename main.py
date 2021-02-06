@@ -2,23 +2,25 @@ import os
 import pytz
 
 from datetime import datetime
+
 from MessageDA import MessageDA
 from CoinPriceDA import CoinPriceDA
 from PriceStorageDA import PriceStorageDA
+from GraphDA import GraphDA
 
 
 def handler(event, context):
-    env = os.getenv("env")
-    #TODO: Remove this later? Currently a hack to prevent AWS from erroring because I haven't updated the layer.
-    if env == 'AWS':
-        record_balances()
-        price_alert()
-    else:
-        plot_balances()
+    # Setting a single start time.
+    eastern = pytz.timezone('US/Eastern')
+    start_time = datetime.now(eastern)
+
+    # We have to record balances before the price alert, because it now depends on balances.
+    record_balances(start_time)
+    price_alert(start_time)
+
+    # plot_balances()
 
 def plot_balances():
-    #TODO: Move import up higher once you update the layer with pandas and pyplot
-    from GraphDA import GraphDA
 
     priceStorageDA = PriceStorageDA()
     balance_records = priceStorageDA.getBalances()
@@ -26,19 +28,16 @@ def plot_balances():
     graphDA.plot_data(balance_records)
 
 
-def record_balances():
+def record_balances(start_time):
     coinPriceDA = CoinPriceDA()
     balance_records = coinPriceDA.get_account_balances()
 
-    eastern = pytz.timezone('US/Eastern')
-    time = datetime.now(eastern)
-
     for balance_record in balance_records:
 
-        balance_record["time"] = time
+        balance_record["time"] = start_time
         product = balance_record["currency"]
         if product != "USD":
-            product_code = balance_record["currency"] + "-USD"
+            product_code = balance_record["currency"]
             balance_record["price"] = coinPriceDA.get_price(product_code)
             order_records = coinPriceDA.get_orders(product_code)
 
@@ -66,8 +65,9 @@ def record_balances():
     print(f"Balances recorded")
 
 
-def price_alert():
-    product_codes = ["BTC-USD", "ETH-USD"]
+def price_alert(start_time):
+    product_codes = ["BTC", "ETH"]
+
 
     for product_code in product_codes:
         # Get price from Coinbase
@@ -76,13 +76,12 @@ def price_alert():
 
         # Store price in DB
         priceStorageDA = PriceStorageDA()
-        eastern = pytz.timezone('US/Eastern')
-        time = datetime.now(eastern)
+
         env = os.getenv("env")
-        priceStorageDA.savePrice(time, product_code, price)
+        priceStorageDA.savePrice(start_time, product_code, price)
 
         # Get last six hours prices
-        price_records = priceStorageDA.getPrices(product_code)["Items"]
+        price_records = priceStorageDA.getPrices(start_time, product_code)
         current_price_record = price_records[0]
         current_price = float(current_price_record["PRC"])
         print(f"Current price for " + product_code + " is " + str(current_price))
@@ -109,13 +108,18 @@ def price_alert():
 
         # Send SMS message
         if send_message:
+            # Get the current data for this product
+            current_balance_record = priceStorageDA.get_current_balance(start_time, product_code)
+            average_price = round(current_balance_record["AVG_PRC"], 2)
+            percentage_gain = round((current_price - average_price) / average_price * 100, 2)
             messageDA = MessageDA()
             print(f"Sending message.")
             # Adding newline to beginning of the message to avoid sending blank text because of colon character.
             message = "\nGreetings from " + str(env) + ". " + \
                       str(product_code) + " is currently at " + str(price) + \
                       ". This is a change of " + str(percentage_difference) + "% since " + \
-                      price_date_string + "."
+                      price_date_string + ". Your average purchase price was " + str(average_price) + \
+                      " and your profit is " + str(percentage_gain) + "."
 
             messageDA.send_message(message)
 

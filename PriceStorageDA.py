@@ -19,20 +19,29 @@ class PriceStorageDA:
         }
         table.put_item(Item=price_record)
 
-    def getPrices(self, product_code):
-        eastern = pytz.timezone('US/Eastern')
-        now = datetime.now(eastern)
+    def getPrices(self, start_time, product_code):
+        legacy_product_code = product_code + "-USD"
         alert_target_time = float(os.environ.get("alert_target_time"))
-        target_time = now - timedelta(hours=alert_target_time)
-        print(f"Current time is: " + str(now))
+        target_time = start_time - timedelta(hours=alert_target_time)
+        print(f"Current time is: " + str(start_time))
         print(f"Time six hours ago is: " + str(target_time))
 
         dynamodb = self.getDB()
         table = dynamodb.Table("PRC")
         response = table.query(
-            KeyConditionExpression=Key('PD_ID').eq(product_code) & Key('DTM').between(str(target_time), str(now)),
+            KeyConditionExpression=Key('PD_ID').eq(product_code) & Key('DTM').between(str(target_time),
+                                                                                      str(start_time)),
             ScanIndexForward=False
-        )
+        )["Items"]
+        legacy_response = table.query(
+            KeyConditionExpression=Key('PD_ID').eq(legacy_product_code) & Key('DTM').between(str(target_time),
+                                                                                             str(start_time)),
+            ScanIndexForward=False
+        )["Items"]
+        for legacy_price in legacy_response:
+            legacy_price["PD_ID"] = legacy_price["PD_ID"].replace("-USD", "")
+            response.append(legacy_price)
+
         return response
 
     def saveBalance(self, balance_record):
@@ -51,6 +60,28 @@ class PriceStorageDA:
 
         table.put_item(Item=db_balance_record)
 
+    def get_current_balance(self, start_time, product_code):
+        dynamodb = self.getDB()
+        table = dynamodb.Table("PRTFL")
+        dynamo_response = table.query(
+            KeyConditionExpression=Key('PD_ID').eq(product_code) & Key('DTM').eq(str(start_time)))["Items"]
+        response = []
+        for orig_dict in dynamo_response:
+            new_dict = {
+                # Leave DTM as a string. May be a bad idea
+                "DTM": orig_dict["DTM"],
+                "PD_ID": orig_dict["PD_ID"],
+                "PRC": float(orig_dict["PRC"]),
+                "QTY": float(orig_dict["QTY"]),
+                "USD_VAL": float(orig_dict["USD_VAL"]),
+                "AVG_PRC": float(orig_dict["AVG_PRC"])
+            }
+            response.append(new_dict)
+
+        # There should only be one item in this response, so let's just return the first one
+        return response[0]
+
+
     def getBalances(self):
         dynamodb = self.getDB()
         table = dynamodb.Table("PRTFL")
@@ -63,7 +94,8 @@ class PriceStorageDA:
                 "PD_ID": orig_dict["PD_ID"],
                 "PRC": float(orig_dict["PRC"]),
                 "QTY": float(orig_dict["QTY"]),
-                "USD_VAL": float(orig_dict["USD_VAL"])
+                "USD_VAL": float(orig_dict["USD_VAL"]),
+                "AVG_PRC": float(orig_dict["AVG_PRC"])
             }
             response.append(new_dict)
 

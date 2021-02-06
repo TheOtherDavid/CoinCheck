@@ -9,7 +9,7 @@ class CoinPriceDA:
         # Get price for the given currency to USD.
         public_client = cbpro.PublicClient()
 
-        ticker_info = public_client.get_product_ticker(product_id)
+        ticker_info = public_client.get_product_ticker(product_id + "-USD")
         price = ticker_info['price']
 
         return price
@@ -34,7 +34,7 @@ class CoinPriceDA:
         passphrase = os.getenv("cbpro_passphrase")
 
         authenticated_client = cbpro.AuthenticatedClient(key, secret, passphrase)
-        orders_gen = authenticated_client.get_orders(product_id=product_id, status='done')
+        orders_gen = authenticated_client.get_orders(product_id=product_id + "-USD", status='done')
         order_records = list(orders_gen)
 
         # Not all orders include price. Enrich orders with price.
