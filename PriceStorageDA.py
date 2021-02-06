@@ -1,5 +1,7 @@
 import os
 import boto3
+import pytz
+
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
 
@@ -18,9 +20,12 @@ class PriceStorageDA:
         table.put_item(Item=price_record)
 
     def getPrices(self, product_code):
-        now = datetime.now(None)
+        eastern = pytz.timezone('US/Eastern')
+        now = datetime.now(eastern)
         alert_target_time = float(os.environ.get("alert_target_time"))
-        target_time = datetime.now(None) - timedelta(hours=alert_target_time)
+        target_time = now - timedelta(hours=alert_target_time)
+        print(f"Current time is: " + str(now))
+        print(f"Time six hours ago is: " + str(target_time))
 
         dynamodb = self.getDB()
         table = dynamodb.Table("PRC")
