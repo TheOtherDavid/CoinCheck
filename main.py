@@ -6,7 +6,6 @@ from datetime import datetime
 from MessageDA import MessageDA
 from CoinPriceDA import CoinPriceDA
 from PriceStorageDA import PriceStorageDA
-from GraphDA import GraphDA
 
 
 def handler(event, context):
@@ -21,6 +20,8 @@ def handler(event, context):
     # plot_balances()
 
 def plot_balances():
+    # TODO: This is a bandaid to avoid errors with the import layer.
+    from GraphDA import GraphDA
 
     priceStorageDA = PriceStorageDA()
     balance_records = priceStorageDA.getBalances()
