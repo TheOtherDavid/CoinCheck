@@ -79,7 +79,10 @@ class PriceStorageDA:
             response.append(new_dict)
 
         # There should only be one item in this response, so let's just return the first one
-        return response[0]
+        if len(response) != 0:
+            return response[0]
+        else:
+            return None
 
 
     def getBalances(self):

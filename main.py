@@ -85,7 +85,7 @@ def price_alert(start_time):
         price_records = priceStorageDA.getPrices(start_time, product_code)
         current_price_record = price_records[0]
         current_price = float(current_price_record["PRC"])
-        print(f"Current price for " + product_code + " is " + str(current_price))
+        print(f"Current price for " + product_code + ": " + str(current_price))
 
         price_date_string = None
         percentage_difference = None
@@ -105,22 +105,27 @@ def price_alert(start_time):
                 # The FIRST TIME that the price has a >X% difference, break that loop
                 send_message = True
                 break
+        print(f"Previous price for " + product_code + ": " + str(price) + " at " + price_date_string)
         print(f"Largest percent difference for " + product_code + ": " + str(percentage_difference))
 
         # Send SMS message
         if send_message:
             # Get the current data for this product
             current_balance_record = priceStorageDA.get_current_balance(start_time, product_code)
-            average_price = round(current_balance_record["AVG_PRC"], 2)
-            percentage_gain = round((current_price - average_price) / average_price * 100, 2)
+            average_price = 0
+            percentage_gain = 0
+            if current_balance_record != None:
+                average_price = round(current_balance_record["AVG_PRC"], 2)
+                percentage_gain = round((current_price - average_price) / average_price * 100, 2)
             messageDA = MessageDA()
             print(f"Sending message.")
             # Adding newline to beginning of the message to avoid sending blank text because of colon character.
             message = "\nGreetings from " + str(env) + ". " + \
-                      str(product_code) + " is currently at " + str(price) + \
+                      str(product_code) + " is currently at " + str(current_price) + \
                       ". This is a change of " + str(percentage_difference) + "% since " + \
-                      price_date_string + ". Your average purchase price was " + str(average_price) + \
-                      " and your profit is " + str(percentage_gain) + "."
+                      price_date_string # + \
+                      # ". Your average purchase price was " + str(average_price) + \
+                      # " and your profit is " + str(percentage_gain) + "."
 
             messageDA.send_message(message)
 
