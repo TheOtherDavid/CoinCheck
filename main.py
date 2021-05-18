@@ -118,9 +118,16 @@ def price_alert(start_time):
                 average_price = round(current_balance_record["AVG_PRC"], 2)
                 percentage_gain = round((current_price - average_price) / average_price * 100, 2)
             messageDA = MessageDA()
+            
+            salutation = None
+            if percentage_difference > 0:
+                salutation = "Good news"
+            else:
+                salutation = "Bad news"
+
             print(f"Sending message.")
             # Adding newline to beginning of the message to avoid sending blank text because of colon character.
-            message = "\nGreetings from " + str(env) + ". " + \
+            message = "\n" + str(salutation) + " from " + str(env) + ". " + \
                       str(product_code) + " is currently at " + str(current_price) + \
                       ". This is a change of " + str(percentage_difference) + "% since " + \
                       price_date_string # + \
