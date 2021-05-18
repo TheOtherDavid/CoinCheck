@@ -67,7 +67,7 @@ def record_balances(start_time):
 
 
 def price_alert(start_time):
-    product_codes = ["BTC", "ETH"]
+    product_codes = ["BTC", "ETH", "ADA"]
 
 
     for product_code in product_codes:
